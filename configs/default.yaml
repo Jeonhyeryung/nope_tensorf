@@ -1,0 +1,208 @@
+tensorf:
+  model_name: TensorCP
+
+  data_dim_color: 27
+  # dataset depended
+  n_lamb_sigma : [16,16,16]
+  # 함수 선언시(density_n_comp) default 값은 8로 되어있음 why?
+  n_lamb_sh : [48,48,48]
+  # 함수 선언(appearance_n_comp) default 값은 24로 되어 있음 why...?
+
+  # n_lamb_sigma : [96]
+  # n_lamb_sh : [288]
+  
+
+  # 아마 민감...?
+  N_voxel_init:  2097156 # 128**3 : Tanks/Truck # 262144...?
+  # N_voxel_final : 27000000 # 300**3 : Tanks/Truck
+  N_voxel_final : 125000000 # 500**3
+  #near_far: [0.01,6.0] # tanks: [0.01, 6.0], llff: [0.1, 1.0]
+  near_far: [0.1, 1.0] # tanks: [0.01, 6.0], llff: [0.1, 1.0]
+
+
+  L1_weight_inital : 1e-5
+  L1_weight_rest : 1e-5
+
+  # no change
+  density_shift : -10
+  shading_mode: MLP_Fea
+  alpha_mask_thre : 0.0001
+  distance_scale : 25
+  pos_pe : 6
+  view_pe : 2
+  fea_pe : 2
+  featureC: 128 # hidden mlp layer
+  step_ratio : 0.5
+  fea2denseAct : softplus
+
+
+ 
+
+
+  
+model:
+  tensorf: True
+  num_layers: 8
+  freeze_network: False
+  use_image_feature: False
+  network_type: tensorf
+  # tensorf_name: TensorVM
+  occ_activation: softplus
+  hidden_dim: 256
+  pos_enc_levels: 10
+  dir_enc_levels: 4
+dataloading:
+  bbox : [-0.2639609956741333, -0.15538100242614747, -0.28924799799919126, 0.21603899359703066, 0.32461898684501644, 0.19075199127197268, 0.08]
+  # TANks
+  # BARN:[-2.0596469974517824, -0.4806349909305573, -2.2365910148620607, 1.7803529167175292, 0.4793649876117706, 1.283408966064453, 0.32]
+  # TRUCK: [-1.1249999570846558, -0.5976389813423156, -1.0513749885559083, 0.7949999999999999, 0.20236097097396855, 1.0286249351501464, 0.16]
+  # Family: [-0.2639609956741333, -0.15538100242614747, -0.28924799799919126, 0.21603899359703066, 0.32461898684501644, 0.19075199127197268, 0.08]
+  dataset_name: any
+  #path: datasets/Tanks
+  path: datasets/nerf_llff_data
+  scene: ['fern']
+  batchsize: 1
+  n_workers: 1
+  img_size:
+  # path: datasets/Tanks/Family
+  with_depth: False
+  with_mask: False
+  spherify: True
+  customized_poses: False #use poses other than colmap
+  customized_focal: False #use focal other than colmap
+  resize_factor: 4
+  depth_net: dpt
+  crop_size: 0
+  random_ref: 1
+  norm_depth: False
+  load_colmap_poses: True
+  shuffle: True
+  sample_rate: 2 # default 8
+  # family 2
+  # igantius/barn no value
+
+rendering:
+  
+  N_samples: 40000 # 1000000
+  type: tensorf # changed
+  n_max_network_queries: 64000
+  white_background: False
+  radius: 4.0
+  num_points: 128
+  depth_range: [0.01, 1.0]
+  dist_alpha: False
+  use_ray_dir: True
+  normalise_ray: True
+  normal_loss: False
+  sample_option: ndc # uniform
+  outside_steps: 0
+depth:
+  type: None
+  path: weights/dpt_hybrid-midas-501f0c75.pt
+  non_negative: True
+  scale: 0.000305
+  shift: 0.1378
+  invert: True
+  freeze: True
+pose:
+  learn_pose: True
+  learn_R: True
+  learn_t: True
+  init_pose: False
+  init_R_only: False
+  learn_focal: False
+  update_focal: True
+  fx_only: False
+  focal_order: 2
+  init_pose_type: gt
+  init_focal_type: gt
+distortion:
+  learn_distortion: True
+  fix_scaleN: True
+  learn_scale: True
+  learn_shift: True
+training:
+  type: tensorf
+  load_dir: model.pt
+  load_pose_dir: model_pose.pt
+  load_focal_dir: model_focal.pt
+  load_distortion_dir: model_distortion.pt
+  n_training_points: 1024
+  scheduling_epoch: 5000
+  batch_size: 1
+  learning_rate: 0.001
+  focal_lr: 0.001
+  pose_lr: 0.0005
+  distortion_lr: 0.0005
+  weight_decay: 0.0
+  scheduler_gamma_pose: 0.9
+  scheduler_gamma: 0.9954
+  scheduler_gamma_distortion: 0.9
+  scheduler_gamma_focal: 0.9
+  validate_every: -1
+  visualize_every: 1000
+  eval_pose_every: 1 # epoch
+  eval_img_every: 1 # epoch
+  print_every: 100
+  backup_every: 1000
+  checkpoint_every: 5000
+  rgb_weight: [1.0, 1.0]
+  depth_weight: [0.04, 0.0]
+  weight_dist_2nd_loss: [0.0, 0.0]
+  weight_dist_1st_loss: [0.0, 0.0]
+  pc_weight: [1.0, 0.0]
+  rgb_s_weight: [1.0, 0.0]
+  depth_consistency_weight: [0.0, 0.0]
+  rgb_loss_type: l1
+  depth_loss_type: l1
+  log_scale_shift_per_view: False
+  with_auto_mask: False
+  vis_geo: True
+  #vis_resolution: [54, 96]
+  vis_resolution: [75, 100]
+  mode: train
+  with_ssim: False
+  use_gt_depth: False
+  load_ckpt_model_only: False 
+  optim: Adam
+  detach_gt_depth: False
+  match_method: dense
+  pc_ratio: 4
+  shift_first: False
+  detach_ref_img: True
+  scheduling_start: 10000
+  auto_scheduler: True
+  length_smooth: 1000
+  patient: 30
+  scale_pcs: True
+  detach_rgbs_scale: False
+  scheduling_mode: 
+  vis_reprojection_every: 5000
+  nearest_limit: 0.01
+  annealing_epochs: 2000 #should be >=0
+  #out_dir : out/Tanks/Family
+  out_dir : out/llff/fern
+
+extract_images:
+  extraction_dir: extraction
+  N_novel_imgs: 120
+  traj_option: bspline
+  use_learnt_poses: True
+  use_learnt_focal: True
+  # resolution: [540, 960]
+  resolution: [756, 1008]
+  model_file: model.pt
+  model_file_pose: model_pose.pt
+  model_file_focal: model_focal.pt
+  eval_depth: False
+  bspline_degree: 100
+eval_pose:
+  n_points: 1024
+  type: nope_nerf
+  type_to_eval: eval
+  opt_pose_epoch: 1000
+  extraction_dir: extraction
+  init_method: pre
+  opt_eval_lr: 0.001
+
+
