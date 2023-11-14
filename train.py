@@ -395,4 +395,3 @@ if __name__=='__main__':
     # backup model
     backup(cfg['training']['out_dir'], args.config)
     train(cfg=cfg)
-    
