@@ -8,7 +8,7 @@ from .common import get_ndc_rays_fxfy
 
 epsilon = 1e-6
 
-def OctreeRender_trilinear_fast(rays, tensorf, chunk=4096, N_samples=1e6, ndc_ray=False, white_bg=True, is_train=False, device='cuda'):
+def OctreeRender_trilinear_fast(rays, tensorf, chunk=4096, N_samples=1e6, ndc_ray=False, white_bg=True, is_train=True, device='cuda'):
 
     rgbs, alphas, depth_maps, weights, uncertainties = [], [], [], [], []
     N_rays_all = rays.shape[0]
@@ -137,7 +137,7 @@ class Renderer(nn.Module):
             rgb, depth_pred = OctreeRender_trilinear_fast(
                 rays =rays, 
                 tensorf = self.model, 
-                chunk = ray_vector.shape[1],
+                chunk = n_points,
                 N_samples = self.N_samples,
                 ndc_ray= (sample_option=='ndc'),
                 white_bg= self.white_background,
@@ -287,7 +287,7 @@ class Renderer(nn.Module):
             N_samples = self.N_samples,
             ndc_ray= (sample_option=='ndc'),
             white_bg= self.white_background,
-            is_train=False,
+            is_train=True,
             device= self._device
         )
 
@@ -295,36 +295,7 @@ class Renderer(nn.Module):
         dist_pred = depth_pred
         ################################################
 
-        
-        
-        # if dist_alpha:
-        #     t_vals = z_val.view(batch_size * n_points, full_steps)
-        #     deltas = t_vals[:, 1:] - t_vals[:, :-1]  # (H, W, N_sample-1)
-        #     dist_far = torch.empty(size=(batch_size * n_points, 1), dtype=torch.float32, device=dists.device).fill_(1e10)  # (H, W, 1)
-        #     deltas = torch.cat([deltas, dist_far], dim=-1)  # (H, W, N_sample)
-        #     alpha = 1 - torch.exp(-1.0 * alpha * deltas)  # (H, W, N_sample)      
-        #     alpha[:, -1] = 1. # enforce predicted depth>0
-        # else:
-        #     alpha = None
 
-        # weights = alpha * torch.cumprod(torch.cat([torch.ones((rgb.shape[0], 1), device=device), 1.-alpha + epsilon ], -1), -1)[:, :-1]
-        # rgb_values = torch.sum(weights.unsqueeze(-1) * rgb, dim=-2)
-        # dist_pred = torch.sum(weights.unsqueeze(-1) * z_val, dim=-2).squeeze(-1)
-        # if not eval_ and normal_loss: # 어차피 normal loss = False default -> grad function 필요 없
-        #     surface_mask = network_object_mask.view(-1)
-        #     surface_points = points[surface_mask]
-        #     N = surface_points.shape[0]
-        #     surface_points_neig = surface_points + (torch.rand_like(surface_points) - 0.5) * 0.01      
-        #     pp = torch.cat([surface_points, surface_points_neig], dim=0)
-        #     g = self.model.gradient(pp, it) 
-        #     normals_ = g[:, 0, :] / (g[:, 0, :].norm(2, dim=1).unsqueeze(-1) + 10**(-5))
-        #     diff_norm = torch.norm(normals_[:N] - normals_[N:], dim=-1)
-        # else:
-        #     diff_norm = None
-
-        # if self.white_background:
-        #     acc_map = torch.sum(weights, -1)
-        #     rgb_values = rgb_values + (1. - acc_map.unsqueeze(-1))
 
         d_i_gt =  d_i_gt[0] 
         if eval_ and normalise_ray:
